@@ -1,0 +1,19 @@
+{
+  "name": "laga",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LagaSports/laga-node-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LagaSports/laga-node-js/issues"
+  },
+  "homepage": "https://github.com/LagaSports/laga-node-js#readme",
+  "description": ""
+}
