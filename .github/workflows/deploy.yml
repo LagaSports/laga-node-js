@@ -1,0 +1,46 @@
+name: Deploy
+on: 
+  workflow_dispatch:
+    inputs:
+      commitHashToBuild:
+        description: 'Commit Hash to Build'
+        required: true
+      useWorkflowFromInput:
+        description: 'Use Workflow From'
+        type: string
+        default: 'master'
+        required: true
+      targetEnv:
+        description: 'Target_ENV'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+          - dev
+      productionConfirmationText:
+        type: string
+        description: 'Type "production" for deployment to production'
+      runWorkflowOn:
+        description: 'Run Workflow on'
+        required: true
+        type: choice
+        default: 'ubuntu-latest'
+        options:
+          - ubuntu-latest
+
+jobs:
+  deployToHeroku:
+    runs-on: ${{ inputs.runWorkflowOn }}
+    steps:
+      - name: Check Production Confirmation
+        if: inputs.targetEnv == 'production' && inputs.productionConfirmationText != 'production'
+        run: exit 1
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.commitHashToBuild }}
+      - uses: akhileshns/heroku-deploy@v3.13.15
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: laga-node
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
