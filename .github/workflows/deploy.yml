@@ -36,7 +36,7 @@ jobs:
       - name: Check Production Confirmation
         if: inputs.targetEnv == 'production' && inputs.productionConfirmationText != 'production'
         run: exit 1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commitHashToBuild }}
       - name: Set environment variables
