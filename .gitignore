@@ -1,4 +1,4 @@
- # Node modules
+# Node modules
 node_modules/
 
 # Logs
@@ -101,3 +101,12 @@ build/Release
 
 # TypeScript cache
 *.tsbuildinfo
+
+# TypeScript specific
+*.tsbuildinfo
+dist/
+build/
+out/
+
+# Source maps
+*.map
