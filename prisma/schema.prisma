@@ -15,17 +15,189 @@ datasource db {
 
 model User {
     id          Int      @id @default(autoincrement()) 
-    phoneNumber String?   @unique @db.VarChar()
+    phone_number String?   @unique @db.VarChar()
     password    String    @db.VarChar()
     name        String?  @db.VarChar()
     email       String?  @unique @db.VarChar()
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @default(now()) @updatedAt
-    deletedAt   DateTime?
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+    tournaments Tournament[]
+    players     Player[]
 
     @@map("users")
 
-    @@index([phoneNumber])
+    @@index([phone_number])
     @@index([email])
 }
 
+
+model Tournament {
+    id          Int      @id @default(autoincrement())  
+    name        String   @db.VarChar()
+    type        String   @db.VarChar()
+    points_to_play Int     
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+    creator    User     @relation(fields: [creator_id], references: [id])
+    creator_id   Int 
+    teams       Team[]
+    matches     Match[]
+    leaderboards Leaderboard[]
+    
+    @@map("tournaments")
+
+    @@index([name])
+    @@index([created_at])
+    @@index([creator_id])
+}
+
+model Team {   
+    id          Int      @id @default(autoincrement())  
+    name        String   @db.VarChar()
+    tournament_id Int
+    tournament   Tournament @relation(fields: [tournament_id], references: [id])
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+    player_teams PlayerTeam[]
+    match_scores MatchScore[]
+    matchSets   MatchSet[]
+    leaderboards Leaderboard[]
+    
+    @@map("teams")
+
+    @@index([name])
+    @@index([tournament_id])
+    @@index([created_at])
+}
+
+
+model Player {
+    id          Int      @id @default(autoincrement())  
+    name        String   @db.VarChar()
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+    user_id      Int?
+    user        User?    @relation(fields: [user_id], references: [id])
+    player_teams PlayerTeam[]
+
+    @@map("players")
+
+    @@index([name])
+    @@index([created_at])
+    @@index([user_id])
+}
+
+model PlayerTeam {
+    id          Int      @id @default(autoincrement())  
+    player_id    Int
+    player      Player   @relation(fields: [player_id], references: [id])
+    team_id      Int
+    team        Team     @relation(fields: [team_id], references: [id])
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+
+    @@map("player_teams")
+
+    @@index([player_id])
+    @@index([team_id])
+    @@index([created_at])
+}
+
+model Match {
+    id          Int      @id @default(autoincrement())  
+    tournament_id Int
+    tournament   Tournament @relation(fields: [tournament_id], references: [id])
+    start_time   DateTime?
+    end_time     DateTime?
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+    match_scores MatchScore[]
+    matchSets   MatchSet[]
+    matchSummary MatchSummary?
+    @@map("matches")
+
+    @@index([tournament_id])
+    @@index([start_time])
+    @@index([end_time])
+    @@index([created_at])
+}
+
+
+model MatchScore {
+    id          Int      @id @default(autoincrement())  
+    match_id     Int
+    match       Match    @relation(fields: [match_id], references: [id])
+    team_id      Int
+    team        Team     @relation(fields: [team_id], references: [id])
+    score       Int
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+
+    @@map("match_scores")
+
+    @@index([match_id])
+    @@index([team_id])
+    @@index([created_at])
+}
+
+
+model MatchSet {
+    id          Int      @id @default(autoincrement())  
+    match_id     Int
+    match       Match    @relation(fields: [match_id], references: [id])
+    team_id      Int
+    team        Team     @relation(fields: [team_id], references: [id])
+    points       Int
+    set_number    Int
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+
+    @@map("match_sets")
+
+    @@index([match_id])
+    @@index([team_id])
+    @@index([created_at])
+}
+
+model MatchSummary {
+    id          Int      @id @default(autoincrement())  
+    matchId     Int      @unique
+    match       Match    @relation(fields: [matchId], references: [id])
+    totalSets   Int
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+
+    @@map("match_summaries")
+
+    @@index([matchId])
+    @@index([created_at])
+    @@index([totalSets])
+}
+
+model Leaderboard {
+    id          Int      @id @default(autoincrement())  
+    tournamentId Int
+    tournament   Tournament @relation(fields: [tournamentId], references: [id])
+    teamId      Int
+    team        Team     @relation(fields: [teamId], references: [id])
+    points      Int
+    winRate     Float
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now()) @updatedAt
+    deleted_at   DateTime?
+
+    @@map("leaderboards")
+
+    @@index([tournamentId])
+    @@index([teamId])
+    @@index([created_at])
+}
