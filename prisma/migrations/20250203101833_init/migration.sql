@@ -2,7 +2,6 @@
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
     "phone_number" VARCHAR,
-    "password" VARCHAR NOT NULL,
     "name" VARCHAR,
     "email" VARCHAR,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -18,10 +17,12 @@ CREATE TABLE "tournaments" (
     "name" VARCHAR NOT NULL,
     "type" VARCHAR NOT NULL,
     "points_to_play" INTEGER NOT NULL,
+    "location" VARCHAR,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
     "creator_id" INTEGER NOT NULL,
+    "number_of_court" INTEGER,
 
     CONSTRAINT "tournaments_pkey" PRIMARY KEY ("id")
 );
@@ -42,10 +43,13 @@ CREATE TABLE "teams" (
 CREATE TABLE "players" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR NOT NULL,
+    "phone_number" VARCHAR,
+    "email" VARCHAR,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
     "user_id" INTEGER,
+    "tournament_id" INTEGER,
 
     CONSTRAINT "players_pkey" PRIMARY KEY ("id")
 );
@@ -71,6 +75,9 @@ CREATE TABLE "matches" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
+    "round_number" INTEGER NOT NULL DEFAULT 1,
+    "court_number" INTEGER,
+    "status" VARCHAR,
 
     CONSTRAINT "matches_pkey" PRIMARY KEY ("id")
 );
@@ -105,8 +112,8 @@ CREATE TABLE "match_sets" (
 -- CreateTable
 CREATE TABLE "match_summaries" (
     "id" SERIAL NOT NULL,
-    "matchId" INTEGER NOT NULL,
-    "totalSets" INTEGER NOT NULL,
+    "match_id" INTEGER NOT NULL,
+    "total_sets" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
@@ -117,15 +124,36 @@ CREATE TABLE "match_summaries" (
 -- CreateTable
 CREATE TABLE "leaderboards" (
     "id" SERIAL NOT NULL,
-    "tournamentId" INTEGER NOT NULL,
-    "teamId" INTEGER NOT NULL,
+    "tournament_id" INTEGER NOT NULL,
+    "team_id" INTEGER,
+    "player_id" INTEGER,
     "points" INTEGER NOT NULL,
-    "winRate" DOUBLE PRECISION NOT NULL,
+    "matches_played" INTEGER NOT NULL,
+    "matches_won" INTEGER NOT NULL,
+    "matches_lost" INTEGER NOT NULL,
+    "matches_draw" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "leaderboards_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "padel_courts" (
+    "id" SERIAL NOT NULL,
+    "province" VARCHAR NOT NULL,
+    "city" VARCHAR,
+    "kecamatan" VARCHAR,
+    "kelurahan" VARCHAR,
+    "court_name" VARCHAR NOT NULL,
+    "number_of_court" INTEGER NOT NULL,
+    "google_maps_link" VARCHAR NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "padel_courts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -168,6 +196,15 @@ CREATE INDEX "players_created_at_idx" ON "players"("created_at");
 CREATE INDEX "players_user_id_idx" ON "players"("user_id");
 
 -- CreateIndex
+CREATE INDEX "players_phone_number_idx" ON "players"("phone_number");
+
+-- CreateIndex
+CREATE INDEX "players_email_idx" ON "players"("email");
+
+-- CreateIndex
+CREATE INDEX "players_tournament_id_idx" ON "players"("tournament_id");
+
+-- CreateIndex
 CREATE INDEX "player_teams_player_id_idx" ON "player_teams"("player_id");
 
 -- CreateIndex
@@ -207,25 +244,43 @@ CREATE INDEX "match_sets_team_id_idx" ON "match_sets"("team_id");
 CREATE INDEX "match_sets_created_at_idx" ON "match_sets"("created_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "match_summaries_matchId_key" ON "match_summaries"("matchId");
+CREATE UNIQUE INDEX "match_summaries_match_id_key" ON "match_summaries"("match_id");
 
 -- CreateIndex
-CREATE INDEX "match_summaries_matchId_idx" ON "match_summaries"("matchId");
+CREATE INDEX "match_summaries_match_id_idx" ON "match_summaries"("match_id");
 
 -- CreateIndex
 CREATE INDEX "match_summaries_created_at_idx" ON "match_summaries"("created_at");
 
 -- CreateIndex
-CREATE INDEX "match_summaries_totalSets_idx" ON "match_summaries"("totalSets");
+CREATE INDEX "match_summaries_total_sets_idx" ON "match_summaries"("total_sets");
 
 -- CreateIndex
-CREATE INDEX "leaderboards_tournamentId_idx" ON "leaderboards"("tournamentId");
+CREATE INDEX "leaderboards_tournament_id_idx" ON "leaderboards"("tournament_id");
 
 -- CreateIndex
-CREATE INDEX "leaderboards_teamId_idx" ON "leaderboards"("teamId");
+CREATE INDEX "leaderboards_team_id_idx" ON "leaderboards"("team_id");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_player_id_idx" ON "leaderboards"("player_id");
 
 -- CreateIndex
 CREATE INDEX "leaderboards_created_at_idx" ON "leaderboards"("created_at");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_points_idx" ON "leaderboards"("points");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_matches_played_idx" ON "leaderboards"("matches_played");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_matches_won_idx" ON "leaderboards"("matches_won");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_matches_lost_idx" ON "leaderboards"("matches_lost");
+
+-- CreateIndex
+CREATE INDEX "leaderboards_matches_draw_idx" ON "leaderboards"("matches_draw");
 
 -- AddForeignKey
 ALTER TABLE "tournaments" ADD CONSTRAINT "tournaments_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -235,6 +290,9 @@ ALTER TABLE "teams" ADD CONSTRAINT "teams_tournament_id_fkey" FOREIGN KEY ("tour
 
 -- AddForeignKey
 ALTER TABLE "players" ADD CONSTRAINT "players_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "players" ADD CONSTRAINT "players_tournament_id_fkey" FOREIGN KEY ("tournament_id") REFERENCES "tournaments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "player_teams" ADD CONSTRAINT "player_teams_player_id_fkey" FOREIGN KEY ("player_id") REFERENCES "players"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -258,10 +316,13 @@ ALTER TABLE "match_sets" ADD CONSTRAINT "match_sets_match_id_fkey" FOREIGN KEY (
 ALTER TABLE "match_sets" ADD CONSTRAINT "match_sets_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "match_summaries" ADD CONSTRAINT "match_summaries_matchId_fkey" FOREIGN KEY ("matchId") REFERENCES "matches"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "match_summaries" ADD CONSTRAINT "match_summaries_match_id_fkey" FOREIGN KEY ("match_id") REFERENCES "matches"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "leaderboards" ADD CONSTRAINT "leaderboards_tournamentId_fkey" FOREIGN KEY ("tournamentId") REFERENCES "tournaments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "leaderboards" ADD CONSTRAINT "leaderboards_tournament_id_fkey" FOREIGN KEY ("tournament_id") REFERENCES "tournaments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "leaderboards" ADD CONSTRAINT "leaderboards_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "leaderboards" ADD CONSTRAINT "leaderboards_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "leaderboards" ADD CONSTRAINT "leaderboards_player_id_fkey" FOREIGN KEY ("player_id") REFERENCES "players"("id") ON DELETE SET NULL ON UPDATE CASCADE;

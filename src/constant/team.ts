@@ -1,0 +1,1 @@
+export const TEAM_GENERATED_BY_SYSTEM = "SYSTEM";

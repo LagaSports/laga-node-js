@@ -16,7 +16,6 @@ datasource db {
 model User {
     id          Int      @id @default(autoincrement()) 
     phone_number String?   @unique @db.VarChar()
-    password    String    @db.VarChar()
     name        String?  @db.VarChar()
     email       String?  @unique @db.VarChar()
     created_at   DateTime @default(now())
@@ -37,14 +36,17 @@ model Tournament {
     name        String   @db.VarChar()
     type        String   @db.VarChar()
     points_to_play Int     
+    location      String?   @db.VarChar()
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
     creator    User     @relation(fields: [creator_id], references: [id])
     creator_id   Int 
+    number_of_court Int?
     teams       Team[]
     matches     Match[]
     leaderboards Leaderboard[]
+    players     Player[]
     
     @@map("tournaments")
 
@@ -77,18 +79,25 @@ model Team {
 model Player {
     id          Int      @id @default(autoincrement())  
     name        String   @db.VarChar()
+    phone_number String? @db.VarChar()
+    email        String? @db.VarChar()
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
     user_id      Int?
     user        User?    @relation(fields: [user_id], references: [id])
     player_teams PlayerTeam[]
-
+    tournament_id Int?
+    tournament   Tournament? @relation(fields: [tournament_id], references: [id])
+    leaderboards Leaderboard[]
     @@map("players")
 
     @@index([name])
     @@index([created_at])
     @@index([user_id])
+    @@index([phone_number])
+    @@index([email])
+    @@index([tournament_id])
 }
 
 model PlayerTeam {
@@ -117,6 +126,9 @@ model Match {
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
+    round_number Int @default(1)
+    court_number Int?
+    status String? @db.VarChar()
     match_scores MatchScore[]
     matchSets   MatchSet[]
     matchSummary MatchSummary?
@@ -169,35 +181,61 @@ model MatchSet {
 
 model MatchSummary {
     id          Int      @id @default(autoincrement())  
-    matchId     Int      @unique
-    match       Match    @relation(fields: [matchId], references: [id])
-    totalSets   Int
+    match_id     Int      @unique
+    match       Match    @relation(fields: [match_id], references: [id])
+    total_sets   Int
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
 
     @@map("match_summaries")
 
-    @@index([matchId])
+    @@index([match_id])
     @@index([created_at])
-    @@index([totalSets])
+    @@index([total_sets])
 }
 
 model Leaderboard {
     id          Int      @id @default(autoincrement())  
-    tournamentId Int
-    tournament   Tournament @relation(fields: [tournamentId], references: [id])
-    teamId      Int
-    team        Team     @relation(fields: [teamId], references: [id])
+    tournament_id Int
+    tournament   Tournament @relation(fields: [tournament_id], references: [id])
+    team_id      Int?
+    team        Team?     @relation(fields: [team_id], references: [id])
+    player_id    Int?
+    player      Player?   @relation(fields: [player_id], references: [id])
     points      Int
-    winRate     Float
+    matches_played Int
+    matches_won Int
+    matches_lost Int
+    matches_draw Int
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
 
     @@map("leaderboards")
 
-    @@index([tournamentId])
-    @@index([teamId])
+    @@index([tournament_id])
+    @@index([team_id])
+    @@index([player_id])
     @@index([created_at])
+    @@index([points])
+    @@index([matches_played])
+    @@index([matches_won])
+    @@index([matches_lost])
+    @@index([matches_draw])
+}
+
+model PadelCourt {
+    id             Int      @id @default(autoincrement())
+    province       String   @db.VarChar()
+    city           String?  @db.VarChar()
+    kecamatan      String?  @db.VarChar()
+    kelurahan      String?  @db.VarChar()
+    court_name     String   @db.VarChar()
+    number_of_court Int     
+    google_maps_link String   @db.VarChar()
+    created_at      DateTime @default(now())
+    updated_at      DateTime @updatedAt
+    deleted_at      DateTime?
+    @@map("padel_courts")
 }

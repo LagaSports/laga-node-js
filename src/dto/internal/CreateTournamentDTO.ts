@@ -4,4 +4,6 @@ export type CreateTournamentDTO = {
     type: string;
     points_to_play: number;
     creator_id: number;
+    location: string;
+    number_of_court: number;
 } 
