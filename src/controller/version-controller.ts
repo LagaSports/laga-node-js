@@ -8,7 +8,7 @@ const getVersion = async (req: Request, res: Response, next: NextFunction) => {
         res.status(200).json({
             data: {
                 commit: {
-                    hash: commitHash,
+                    hash: "fklsjflkj",
                 }
             }
         });
