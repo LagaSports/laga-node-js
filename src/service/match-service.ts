@@ -501,6 +501,7 @@ export class MatchService {
                 leaderboardEntry.matches_played = leaderboardEntry.matches_played + 1;
                 await this.leaderboardRepository.save(leaderboardEntry, tx);
             } else {
+                
                 const leaderboard: any = {
                     player_id: player.id,
                     points: pointWin,
