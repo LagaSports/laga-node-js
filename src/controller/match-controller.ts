@@ -7,9 +7,7 @@ export class MatchController {
 
     createMatch = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { tournamentId, round } = req.body;
-            const result = await this.matchService.createMatch(Number(tournamentId), Number(round));
-            res.status(201).json(ApiResponseBuilder.created(result, "Match created successfully"));
+            res.status(201).json(ApiResponseBuilder.created("Match created successfully"));
         } catch (e) {
             next(e);
         }

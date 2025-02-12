@@ -10,18 +10,18 @@ export class LeaderboardService {
 
     constructor(private readonly leaderboardRepository: LeaderboardRepository, private readonly matchRepository: MatchRepository, private readonly prismaClient: PrismaClient) {}
 
-    public updateLeaderboard = async (tournamentId: number, tx?: Prisma.TransactionClient): Promise<Leaderboard[]> => {
-        const leaderboards = await this.leaderboardRepository.findByTournamentId(tournamentId, tx);
-        const matches = await this.matchRepository.findByTournamentId(tournamentId, tx);
+    // public updateLeaderboard = async (tournamentId: number, tx?: Prisma.TransactionClient): Promise<Leaderboard[]> => {
+    //     const leaderboards = await this.leaderboardRepository.findByTournamentId(tournamentId, tx);
+    //     const matches = await this.matchRepository.findByTournamentId(tournamentId, tx);
 
-        return await this.leaderboardRepository.updateLeaderboard(tournamentId, tx);
-    }
+    //     return await this.leaderboardRepository.updateLeaderboard(tournamentId, tx);
+    // }
 
-    public updateLeaderboardWithTransaction = async (tournamentId: number): Promise<Leaderboard[]> => {
-        return await this.prismaClient.$transaction(async (tx) => {
-            return await this.updateLeaderboard(tournamentId, tx);
-        });
-    }
+    // public updateLeaderboardWithTransaction = async (tournamentId: number): Promise<Leaderboard[]> => {
+    //     return await this.prismaClient.$transaction(async (tx) => {
+    //         return await this.updateLeaderboard(tournamentId, tx);
+    //     });
+    // }
 
     // private calculateLeaderboard = async (matches: Match[]): Promise<LeaderBoardDTO[]> => {
     //     const leaderboard: LeaderBoardDTO[] = [];
@@ -49,7 +49,7 @@ export class LeaderboardService {
         return leaderboards.map(this.convertLeaderboardToDTO);
     }
 
-    private convertLeaderboardToDTO = (leaderboard: Leaderboard): LeaderboardDTO => {   
+    private convertLeaderboardToDTO = (leaderboard: any): LeaderboardDTO => {   
         return {
             id: leaderboard.id,
             tournamentId: leaderboard.tournament_id,

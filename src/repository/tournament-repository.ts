@@ -22,8 +22,8 @@ export class TournamentRepository {
     }
 
 
-    findByCreatorId = async (creatorId: number): Promise<Tournament[]> => {
-        const tournaments = await this.prismaClient.tournament.findMany({
+    findByCreatorId = async (creatorId: number): Promise<any[]> => {
+        const tournaments : any = await this.prismaClient.tournament.findMany({
             select: {
                 id: true,
                 name: true,
@@ -51,7 +51,7 @@ export class TournamentRepository {
         return tournaments;
     }
 
-    findById = async (id: number, tx?: Prisma.TransactionClient): Promise<Tournament | null> => {
+    findById = async (id: number, tx?: Prisma.TransactionClient): Promise<any | null> => {
         return await (tx ?? this.prismaClient).tournament.findUnique({
             where: {
                 id: id,

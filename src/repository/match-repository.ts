@@ -130,7 +130,7 @@ export class MatchRepository {
     }
 
     findPlayerIdByTeamId = async (teamId: number, tx?: Prisma.TransactionClient): Promise<number[]> => {
-        const playerTeams: PlayerTeam[] =  await (tx ?? this.prismaClient).playerTeam.findMany({
+        const playerTeams: any =  await (tx ?? this.prismaClient).playerTeam.findMany({
             where: { team_id: teamId },
             select: {
                 player: {
@@ -141,7 +141,7 @@ export class MatchRepository {
                 team: false
             }
         });
-        return playerTeams.map(playerTeam => playerTeam.player.id);
+        return playerTeams.map((playerTeam: any) => playerTeam.player.id);
     }
 
     findPlayersByTeamId = async (teamId: number, tx?: Prisma.TransactionClient): Promise<number[]> => {
@@ -175,7 +175,7 @@ export class MatchRepository {
         });
     }   
 
-    findMatchScoreByMatchId = async (matchId: number, tx?: Prisma.TransactionClient): Promise<MatchScore[]> => {
+    findMatchScoreByMatchId = async (matchId: number, tx?: Prisma.TransactionClient): Promise<any[]> => {
         return await (tx ?? this.prismaClient).matchScore.findMany({
             where: { match_id: matchId },
             select: {

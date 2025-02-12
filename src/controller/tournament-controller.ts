@@ -14,7 +14,7 @@ export class TournamentController {
 
     create = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const result: Tournament = await this.tournamentService.create(req.body);
+            const result: TournamentDTO = await this.tournamentService.create(req.body);
             res.status(201).json(ApiResponseBuilder.created(result, "Tournament created successfully"));
         } catch (e) {
             next(e);

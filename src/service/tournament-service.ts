@@ -108,7 +108,7 @@ export class TournamentService {
         }
     }
 
-    private mapToTournamentDTO = (tournament: Tournament): TournamentDTO => {
+    private mapToTournamentDTO = (tournament: any): TournamentDTO => {
         return {
             id: tournament.id,
             name: tournament.name,

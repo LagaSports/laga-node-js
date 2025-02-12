@@ -70,7 +70,7 @@ export class MatchService {
         const matches: Match[] = [];
         
         // Get available courts from tournament
-        const maxCourts = tournament.number_of_courts || 1;
+        const maxCourts = tournament?.number_of_court || 1;
 
         if (tournament.type === GAME_TYPES.MEXICANO || tournament.type === GAME_TYPES.MIXICANO || tournament.type === GAME_TYPES.TEAM_MIXICANO) {
             return this.generateMatchesByLeaderboard(tournament, latestRoundNumber, maxCourts, tx);
@@ -80,14 +80,14 @@ export class MatchService {
     }
 
     private generateMatchesByLeaderboard = async (
-        tournament: Tournament, 
+        tournament: any, 
         latestRoundNumber: number,
         maxCourts: number,
         tx?: Prisma.TransactionClient
     ): Promise<Match[]> => {
         // Get leaderboard data sorted by points
         const leaderboards = await this.leaderboardRepository.findByTournamentId(tournament.id, tx);
-        const playerPoints: PlayerPointsDTO[] = tournament.players.map(player => {
+        const playerPoints: PlayerPointsDTO[] = tournament?.players.map((player: Player) => {
             const leaderboardEntry = leaderboards.find(l => l.player_id === player.id);
             return {
                 playerId: player.id,
@@ -99,7 +99,7 @@ export class MatchService {
         playerPoints.sort((a, b) => b.points - a.points);
         
         const matches: Match[] = [];
-        const playerMap = new Map(tournament.players.map(p => [p.id, p]));
+        const playerMap = new Map(tournament?.players.map((p: Player) => [p.id, p]));
         const playersInMatches = new Set<number>();
         const currentRound = latestRoundNumber + 1;
         let currentCourt = 1;
@@ -110,13 +110,13 @@ export class MatchService {
         // And they play against middle rankings
         while (playerPoints.length >= 4) {
             // Get top and bottom players for first team
-            const topPlayer = playerMap.get(playerPoints[0].playerId);
-            const bottomPlayer = playerMap.get(playerPoints[playerPoints.length - 1].playerId);
+            const topPlayer : any = playerMap.get(playerPoints[0].playerId);
+            const bottomPlayer : any = playerMap.get(playerPoints[playerPoints.length - 1].playerId);
             
             // Get middle players for second team
             const middleIndex = Math.floor(playerPoints.length / 2);
-            const middlePlayer1 = playerMap.get(playerPoints[middleIndex - 1].playerId);
-            const middlePlayer2 = playerMap.get(playerPoints[middleIndex].playerId);
+            const middlePlayer1 : any = playerMap.get(playerPoints[middleIndex - 1].playerId);
+            const middlePlayer2 : any = playerMap.get(playerPoints[middleIndex].playerId);
 
             console.log(topPlayer, "MMM");
             console.log(bottomPlayer, "MMM");
@@ -128,7 +128,7 @@ export class MatchService {
             }
 
             // Create first team (top + bottom ranked players)
-            const team1 = await this.matchRepository.createTeam(
+            const team1 : any = await this.matchRepository.createTeam(
                 tournament.id,
                 TEAM_GENERATED_BY_SYSTEM,
                 topPlayer.id,
@@ -137,7 +137,7 @@ export class MatchService {
             );
 
             // Create second team (middle ranked players)
-            const team2 = await this.matchRepository.createTeam(
+            const team2 : any = await this.matchRepository.createTeam(
                 tournament.id,
                 TEAM_GENERATED_BY_SYSTEM,
                 middlePlayer1.id,
@@ -195,7 +195,7 @@ export class MatchService {
     }
 
     private generateMatchesByUnplayedOpponents = async (
-        tournament: Tournament,
+        tournament: any,
         latestRoundNumber: number,
         maxCourts: number,
         tx?: Prisma.TransactionClient
@@ -205,7 +205,7 @@ export class MatchService {
         let currentCourt = 1;
         
         // Get all previous matches to track who played with whom
-        const previousMatches = await this.matchRepository.findByTournamentId(tournament.id, tx);
+        const previousMatches : any = await this.matchRepository.findByTournamentId(tournament.id, tx);
         
         // Track partnerships: who played with whom
         const partnerships = new Map<number, Map<number, number>>();
@@ -213,7 +213,7 @@ export class MatchService {
         const oppositions = new Map<number, Map<number, number>>();
 
         // Initialize tracking maps for each player
-        tournament.players.forEach(player => {
+        tournament.players.forEach((player: any) => {
             partnerships.set(player.id, new Map());
             oppositions.set(player.id, new Map());
         });
@@ -222,7 +222,7 @@ export class MatchService {
         for (const match of previousMatches) {
             console.log(match, "MMM");
             console.log(match.match_scores[0].team, "MMM");
-            const teams = match.match_scores.map(score => ({
+            const teams : any = match.match_scores.map((score: any) => ({
                 teamId: score.team_id,
                 players: score.team.player_teams.map((pt: any) => pt.player_id)
             }));
@@ -233,7 +233,7 @@ export class MatchService {
 
             debugger;
             // Record partnerships (teammates)
-            teams.forEach(team => {
+            teams.forEach((team: any) => {
                 if (team.players.length !== 2) return;
                 const [p1, p2] = team.players;
                 
@@ -243,8 +243,8 @@ export class MatchService {
 
             // Record oppositions (opponents)
             const [team1, team2] = teams;
-            team1.players.forEach(p1 => {
-                team2.players.forEach(p2 => {
+            team1.players.forEach((p1: any) => {
+                team2.players.forEach((p2: any) => {
                     oppositions.get(p1)?.set(p2, (oppositions.get(p1)?.get(p2) ?? 0) + 1);
                     oppositions.get(p2)?.set(p1, (oppositions.get(p2)?.get(p1) ?? 0) + 1);
                 });
@@ -259,8 +259,8 @@ export class MatchService {
         };
 
         // Available players for this round
-        const availablePlayers = new Set(tournament.players.map(p => p.id));
-        const playerMap = new Map(tournament.players.map(p => [p.id, p]));
+        const availablePlayers = new Set(tournament.players.map((p: any) => p.id));
+        const playerMap = new Map(tournament.players.map((p: any) => [p.id, p]));
 
         while (availablePlayers.size >= 4) {
             // Find the best foursome (two pairs) with minimal previous interaction
@@ -283,7 +283,7 @@ export class MatchService {
                                 [[p1, p4], [p2, p3]]
                             ];
 
-                            combinations.forEach(teams => {
+                            combinations.forEach((teams: any) => {
                                 const [[t1p1, t1p2], [t2p1, t2p2]] = teams;
                                 const score = 
                                     getPartnershipScore(t1p1, t1p2) +
@@ -306,10 +306,10 @@ export class MatchService {
             if (!bestFoursome) break;
 
             // Create teams and match with the best foursome
-            const [[p1, p2], [p3, p4]] = bestFoursome;
+            const [[p1, p2], [p3, p4]] : any = bestFoursome;
 
             // Create teams
-            const team1 = await this.matchRepository.createTeam(
+            const team1 : any = await this.matchRepository.createTeam(
                 tournament.id,
                 TEAM_GENERATED_BY_SYSTEM,
                 p1,
@@ -317,7 +317,7 @@ export class MatchService {
                 tx
             );
 
-            const team2 = await this.matchRepository.createTeam(
+            const team2 : any = await this.matchRepository.createTeam(
                 tournament.id,
                 TEAM_GENERATED_BY_SYSTEM,
                 p3,
@@ -426,8 +426,8 @@ export class MatchService {
         let tournamentId: number;
 
         for (const matchScore of matchScores) {
-            const match: Match = await this.matchRepository.findById(matchScore.match_id, tx);
-            const updatedMatch: Match = {
+            const match: any = await this.matchRepository.findById(matchScore.match_id, tx);
+            const updatedMatch: any = {
                 id: match.id,
                 round_number: match.round_number,
                 court_number: match.court_number,
@@ -468,7 +468,7 @@ export class MatchService {
 
 
     private updateLeaderboardForMatch = async (matchId: number, tx?: Prisma.TransactionClient): Promise<void> => {
-        const match: Match = await this.matchRepository.findById(matchId, tx);
+        const match: any = await this.matchRepository.findById(matchId, tx);
         
         if (!match) {
             throw new ResponseError(404, "Match not found");
@@ -479,8 +479,8 @@ export class MatchService {
         }
 
 
-        const winningScore = matchScores[0].score > matchScores[1].score ? matchScores[0] : matchScores[1];
-        const losingScore = matchScores[0].score < matchScores[1].score ? matchScores[0] : matchScores[1];
+        const winningScore : any = matchScores[0].score > matchScores[1].score ? matchScores[0] : matchScores[1];
+        const losingScore : any = matchScores[0].score < matchScores[1].score ? matchScores[0] : matchScores[1];
 
         const pointWin: number = match.tournament.type === GAME_TYPES.MEXICANO || match.tournament.type === GAME_TYPES.MIXICANO || match.tournament.type === GAME_TYPES.TEAM_MIXICANO ? 3 : winningScore.score;
 
@@ -501,7 +501,7 @@ export class MatchService {
                 leaderboardEntry.matches_played = leaderboardEntry.matches_played + 1;
                 await this.leaderboardRepository.save(leaderboardEntry, tx);
             } else {
-                const leaderboard: Leaderboard = {
+                const leaderboard: any = {
                     player_id: player.id,
                     points: pointWin,
                     matches_won: 1,
@@ -522,7 +522,7 @@ export class MatchService {
                 leaderboardEntry.matches_played = leaderboardEntry.matches_played + 1;
                 await this.leaderboardRepository.save(leaderboardEntry, tx);
             } else {
-                const leaderboardEntry: Leaderboard = {
+                const leaderboardEntry: any = {
                     player_id: player.id,
                     points: 0,
                     matches_won: 0,
