@@ -29,6 +29,7 @@ export class UserRepository {
                 email: request.email,
                 name: request.name,
                 phone_number: request.phoneNumber,
+                firebase_uid: request.firebaseUid
             },
         });
     }

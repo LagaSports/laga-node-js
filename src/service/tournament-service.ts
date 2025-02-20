@@ -3,7 +3,7 @@ import { CreateTournamentRequestDTO } from "../dto/api/CreateTournamentRequest.j
 import { GetTournamentByCreatorRequestDTO } from "../dto/api/GetTournamentByCreatorRequestDTO.js";
 import { CreateTournamentDTO } from "../dto/internal/CreateTournamentDTO.js";
 import { PlayerDTO } from "../dto/internal/PlayerDTO.js";
-import { TournamentDTO } from "../dto/internal/TournamentDTO.js";
+import { RecentTournamentDTO, TournamentDTO } from "../dto/internal/TournamentDTO.js";
 import { ResponseError } from "../error/response-error.js";
 import { TournamentRepository } from "../repository/tournament-repository.js";
 import { UserRepository } from "../repository/user-repository.js";
@@ -11,6 +11,7 @@ import { createTournamentValidation, getTournamentsByCreatorIdValidation } from 
 import { validate } from "../validation/validation.js";
 import { MatchService } from "./match-service.js";
 import { PlayerService } from "./player-service.js";
+import { PadelCourtRepository } from "../repository/padel-court-repository.js";
 
 export class TournamentService {
     constructor(
@@ -18,21 +19,28 @@ export class TournamentService {
         private readonly userRepository: UserRepository,
         private readonly playerService: PlayerService,
         private readonly matchService: MatchService,
-        private readonly prismaClient: PrismaClient
+        private readonly prismaClient: PrismaClient,
+        private readonly padelCourtRepository: PadelCourtRepository
     ) {}
 
     public create = async (payload: CreateTournamentRequestDTO): Promise<TournamentDTO> => {
         try {
             validate(createTournamentValidation, payload);
 
+            const padelCourt = await this.padelCourtRepository.findById(Number(payload.padelCourtId));
+
+            if (!padelCourt) {
+                throw new ResponseError(404, "Padel court not found");
+            }
+
             return await this.prismaClient.$transaction(async (tx) => {
                 const tournamentData: CreateTournamentDTO = {
                     name: payload.name,
                     type: payload.type,
                     points_to_play: Number(payload.pointsToPlay),
-                    creator_id: 1,
-                    location: payload.location,
+                    creator_id: payload.creatorId,
                     number_of_court: Number(payload.numberOfCourt),
+                    padel_court_id: Number(payload.padelCourtId),
                 };
 
                 const createdTournament = await this.tournamentRepository.create(tournamentData, tx);
@@ -130,6 +138,30 @@ export class TournamentService {
                 email: player.email,
                 phoneNumber: player.phone_number,
             })) ?? [],
+            padelCourt: tournament.padel_court ? {
+                id: tournament.padel_court.id,
+                name: tournament.padel_court.court_name,
+            } : null,
         };
+    }
+
+    public getRecentTournaments = async (): Promise<RecentTournamentDTO[]> => {
+        try {   
+            const tournaments = await this.tournamentRepository.findRecentTournaments();
+            const recentTournaments: RecentTournamentDTO[] = tournaments.map((tournament) => ({
+                id: tournament.id,
+                name: tournament.name,
+                location: tournament.location,
+                numberOfCourt: tournament.number_of_court,
+                numberOfPlayers: tournament.players.length,
+            }));
+            return recentTournaments;
+        } catch (error) {
+            console.error(error);
+            if (error instanceof ResponseError) {
+                throw error;
+            }
+            throw new ResponseError(500, "Internal server error");
+        }
     }
 }

@@ -1,4 +1,5 @@
 import { MatchDTO } from "./MatchDTO.js";
+import { PadelCourtDTO } from "./PadelCourtDTO.js";
 import { PlayerDTO } from "./PlayerDTO.js";
 
 export type TournamentDTO = {
@@ -11,6 +12,7 @@ export type TournamentDTO = {
     type: string;
     numberOfCourt: number;
     matches: MatchDTO[];
+    padelCourt: PadelCourtDTO | null;
 }
 
 export type LeaderboardDTO = {
@@ -41,3 +43,11 @@ export const GAME_TYPES_LIST = [
     GAME_TYPES.MIXICANO,
     GAME_TYPES.TEAM_MIXICANO
 ];
+
+export type RecentTournamentDTO = {
+    id: Number,
+    name: String,
+    location: String,
+    numberOfCourt: Number,
+    numberOfPlayers: Number,
+}

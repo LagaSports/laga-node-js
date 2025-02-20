@@ -1,5 +1,6 @@
 import { PrismaClient, Tournament, Prisma } from "@prisma/client";
 import { CreateTournamentDTO } from "../dto/internal/CreateTournamentDTO.js";
+import { RecentTournamentDTO } from "../dto/internal/TournamentDTO.js";
 
 export class TournamentRepository {
 
@@ -28,7 +29,6 @@ export class TournamentRepository {
                 id: true,
                 name: true,
                 creator_id: true,
-                location: true,
                 points_to_play: true,
                 type: true,
                 players: {
@@ -61,7 +61,6 @@ export class TournamentRepository {
                 name: true,
                 type: true,
                 points_to_play: true,
-                location: true,
                 creator_id: true,
                 number_of_court: true,
                 matches: {
@@ -99,6 +98,31 @@ export class TournamentRepository {
                         name: true,
                         email: true,
                         phone_number: true
+                    }
+                },
+                padel_court: {
+                    select: {
+                        id: true,
+                        court_name: true,
+                    }
+                }
+            }
+        });
+    }
+
+    findRecentTournaments = async (): Promise<any[]> => {
+        return await this.prismaClient.tournament.findMany({
+            orderBy: {
+                created_at: 'desc',
+            },
+            take: 4,
+            select: {
+                id: true,
+                name: true,
+                number_of_court: true,
+                players: {
+                    select: {
+                        id: true,
                     }
                 }
             }

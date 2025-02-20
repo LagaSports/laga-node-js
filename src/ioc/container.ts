@@ -16,6 +16,9 @@ import { MatchController } from "../controller/match-controller.js";
 import { PlayerController } from "../controller/player-controller.js";
 import { LeaderboardRepository } from "../repository/leaderboard-repository.js";
 import { LeaderboardService } from "../service/leaderboard-service.js";
+import { PadelCourtService } from "../service/padel-court-service.js";
+import { PadelCourtRepository } from "../repository/padel-court-repository.js";
+import { PadelCourtController } from "../controller/padel-court-controller.js";
 
 let containerInstance: AwilixContainer;
 
@@ -30,6 +33,7 @@ export const getContainer = () => {
             firebaseAuth: asValue(auth),
             authController: asClass(AuthController).singleton(),
             tournamentController: asClass(TournamentController).singleton(),
+            padelCourtController: asClass(PadelCourtController).singleton(),
             matchController: asClass(MatchController).singleton(),
             playerController: asClass(PlayerController).singleton(),
             userService: asClass(UserService).singleton(),
@@ -38,11 +42,13 @@ export const getContainer = () => {
             leaderboardService: asClass(LeaderboardService).singleton(),
             playerService: asClass(PlayerService).singleton(),
             matchService: asClass(MatchService).singleton(),
+            padelCourtService: asClass(PadelCourtService).singleton(),
             tournamentRepository: asClass(TournamentRepository).singleton(),
             userRepository: asClass(UserRepository).singleton(),
             playerRepository: asClass(PlayerRepository).singleton(),
             matchRepository: asClass(MatchRepository).singleton(),
             leaderboardRepository: asClass(LeaderboardRepository).singleton(),
+            padelCourtRepository: asClass(PadelCourtRepository).singleton(),
         });
     }
     return containerInstance;

@@ -15,7 +15,14 @@ export class AuthService {
     async register(request: RegisterRequestDTO): Promise<UserDTO> {
         validate(userRegistrationSchema, request);
 
+        const userExists = await this.userRepository.findByEmail(request.firebaseUid);
+        
+        if (userExists) {
+            throw new ResponseError(400, "User already exists");
+        }
+
         const user = await this.userRepository.create(request);
+        
         return {
             id: user.id,
             email: user.email ?? '',

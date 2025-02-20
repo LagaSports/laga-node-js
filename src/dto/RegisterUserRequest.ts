@@ -3,4 +3,5 @@ export type RegisterUserRequest = {
     email?: string;
     phoneNumber?: string;
     password: string;
+    firebaseUid: string;
 };

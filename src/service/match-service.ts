@@ -67,7 +67,12 @@ export class MatchService {
         }
 
         const latestRoundNumber = await this.matchRepository.findLatestRoundNumberByTournamentId(tournamentId, tx);
-        const matches: Match[] = [];
+        const matches: Match[] = await this.matchRepository.findByTournamentId(tournamentId, tx);
+        for (const match of matches) {
+            if (match.status !== MatchStatus.COMPLETED) {
+                throw new ResponseError(400, `All Match Score Must be submitted before going to next round`);
+            }
+        }
         
         // Get available courts from tournament
         const maxCourts = tournament?.number_of_court || 1;

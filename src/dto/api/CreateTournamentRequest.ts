@@ -6,7 +6,7 @@ export type CreateTournamentRequestDTO = {
     type: string;
     pointsToPlay: number;
     creatorId: number;
-    location: string;
     numberOfCourt: number;
+    padelCourtId: number;
     players: Array<PlayerDTO>;
 } 

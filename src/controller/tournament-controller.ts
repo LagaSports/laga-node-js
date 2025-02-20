@@ -3,7 +3,7 @@ import { TournamentService } from "../service/tournament-service.js";
 import { ApiResponseBuilder } from "../response/api-response.js";
 import { Leaderboard, Tournament } from "@prisma/client";
 import { GetTournamentByCreatorRequestDTO } from "../dto/api/GetTournamentByCreatorRequestDTO.js";
-import { LeaderboardDTO, TournamentDTO } from "../dto/internal/TournamentDTO.js";
+import { LeaderboardDTO, RecentTournamentDTO, TournamentDTO } from "../dto/internal/TournamentDTO.js";
 import { LeaderboardService } from "../service/leaderboard-service.js";
 
 export class TournamentController {
@@ -23,11 +23,9 @@ export class TournamentController {
 
     getTournamentsByCreatorId = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            console.log(req);
             const getTournamentByCreatorRequestDTO: GetTournamentByCreatorRequestDTO = {
                 creatorId: Number(req.query.creatorId),
             };
-            console.log(getTournamentByCreatorRequestDTO);
             const result: TournamentDTO[] = await this.tournamentService.getTournamentsByCreatorId(getTournamentByCreatorRequestDTO);
             res.status(200).json(ApiResponseBuilder.success(result, "Tournaments retrieved successfully"));
         } catch (e) {
@@ -57,6 +55,15 @@ export class TournamentController {
         }
     }
 
+    getRecentTournaments = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const result: RecentTournamentDTO[] = await this.tournamentService.getRecentTournaments();
+            res.status(200).json(ApiResponseBuilder.success(result, "Recent tournaments retrieved successfully"));
+        } catch (e) {
+            next(e);
+        }
+    }
+
     // async getAll(req: Request, res: Response, next: NextFunction) {
     //     try {
     //         const tournaments = await this.tournamentService.getAll();
@@ -74,4 +81,5 @@ export class TournamentController {
     //         next(e);
     //     }
     // }
+
 }

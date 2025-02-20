@@ -1,5 +1,7 @@
 export type RegisterRequestDTO = {
-    email: string;
-    name: string;
-    phoneNumber: string;
+    firebaseUid: string;
+    name?: string;
+    email?: string;
+    phoneNumber?: string;
+ 
 }

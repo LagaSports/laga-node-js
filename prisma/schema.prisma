@@ -23,11 +23,13 @@ model User {
     deleted_at   DateTime?
     tournaments Tournament[]
     players     Player[]
+    firebase_uid String? @unique @db.VarChar()
 
     @@map("users")
 
     @@index([phone_number])
     @@index([email])
+    @@index([firebase_uid])
 }
 
 
@@ -36,7 +38,6 @@ model Tournament {
     name        String   @db.VarChar()
     type        String   @db.VarChar()
     points_to_play Int     
-    location      String?   @db.VarChar()
     created_at   DateTime @default(now())
     updated_at   DateTime @default(now()) @updatedAt
     deleted_at   DateTime?
@@ -47,6 +48,8 @@ model Tournament {
     matches     Match[]
     leaderboards Leaderboard[]
     players     Player[]
+    padel_court PadelCourt? @relation(fields: [padel_court_id], references: [id])
+    padel_court_id    Int?
     
     @@map("tournaments")
 
@@ -237,5 +240,7 @@ model PadelCourt {
     created_at      DateTime @default(now())
     updated_at      DateTime @updatedAt
     deleted_at      DateTime?
+    tournaments Tournament[]
+
     @@map("padel_courts")
 }
