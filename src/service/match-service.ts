@@ -282,8 +282,8 @@ export class MatchService {
                                 [[p1, p4], [p2, p3]]
                             ];
 
-                            combinations.forEach(teams => {
-                                const [[t1p1, t1p2], [t2p1, t2p2]] = teams;
+                            combinations.forEach((teams: any) => {
+                                const [[t1p1, t1p2], [t2p1, t2p2]] : any = teams;
                                 const score = getPartnershipScore(t1p1, t1p2, t2p1, t2p2);
 
                                 if (score < bestScore) {
