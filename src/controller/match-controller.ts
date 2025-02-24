@@ -61,4 +61,16 @@ export class MatchController {
             next(e);
         }
     }
+
+    getUnmatchedPlayers = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const tournamentId = Number(req.params.tournamentId);
+            const roundNumber = Number(req.params.roundNumber);
+            
+            const result = await this.matchService.getUnmatchedPlayers(tournamentId, roundNumber);
+            res.status(200).json(ApiResponseBuilder.success(result, "Unmatched players retrieved successfully"));
+        } catch (e) {
+            next(e);
+        }
+    }
 } 

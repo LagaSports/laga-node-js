@@ -20,6 +20,7 @@ publicRouter.post('/register', authController.register);
 publicRouter.get('/version', versionController.getVersion);
 publicRouter.get('/users', authController.getUsers);
 publicRouter.post('/validate-token', authController.validateToken);
+publicRouter.get('/tournaments/:tournamentId/rounds/:roundNumber/unmatched-players', matchController.getUnmatchedPlayers);
 publicRouter.get('/tournaments', tournamentController.getTournamentsByCreatorId);
 publicRouter.get('/tournaments/recent', tournamentController.getRecentTournaments);
 publicRouter.get('/tournaments/:id', tournamentController.findById);
@@ -29,5 +30,6 @@ publicRouter.post('/players', playerController.create);
 publicRouter.patch('/tournaments/match-scores/bulk', matchController.updateMatchScores);
 publicRouter.post('/tournaments/next-round', matchController.generateNextRoundMatches);
 publicRouter.get('/padel-courts', padelCourtController.findAll);
+
 
 

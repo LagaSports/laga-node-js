@@ -31,29 +31,6 @@ export class MatchService {
     ) {}
 
     public createMatch = async (payload: CreateMatchRequestDTO): Promise<Match> => {
-        // const createMatchDTO: CreateMatchDTO = {
-        //     tournamentId: payload.tournamentId,
-        //     roundNumber: payload.roundNumber,
-        // }
-        // const match: Match = await this.matchRepository.create(createMatchDTO);
-        // const { player1, player2, player3, player4, team1, team2 } = payload;
-        // let team1Id = team1;
-        // let team2Id = team2;
-
-        // if (player1 && player2) {
-        //     const team1 = await this.matchRepository.createTeam(payload.tournamentId, TEAM_GENERATED_BY_SYSTEM, player1, player2);
-        //     team1Id = team1.id;
-        // }
-
-        // if (player3 && player4) {
-        //     const team2 = await this.matchRepository.createTeam(payload.tournamentId, TEAM_GENERATED_BY_SYSTEM, player3, player4);
-        //     team2Id = team2.id;
-        // }
-
-        // await this.matchRepository.createInitMatchScore(match.id, team1Id);
-        // await this.matchRepository.createInitMatchScore(match.id, team2Id);
-
-        // return match;
         throw new Error("Method not implemented.");
     }
 
@@ -209,6 +186,14 @@ export class MatchService {
         const currentRound = latestRoundNumber + 1;
         let currentCourt = 1;
         
+        // Get unmatched players from previous round
+        const unmatchedPlayersFromPrevRound = await this.getUnmatchedPlayersWithTx(tournament.id, latestRoundNumber, tx);
+        const priorityPlayerIds = new Set(unmatchedPlayersFromPrevRound.map((p: any) => p.id));
+        
+        // Available players for this round - prioritize previously unmatched players
+        const availablePlayers = new Set(tournament.players.map((p: any) => p.id));
+        const playerMap = new Map(tournament.players.map((p: any) => [p.id, p]));
+
         // Get all previous matches to track who played with whom
         const previousMatches : any = await this.matchRepository.findByTournamentId(tournament.id, tx);
         
@@ -256,25 +241,34 @@ export class MatchService {
             });
         }
 
-        // Helper function to calculate partnership score
-        const getPartnershipScore = (p1: number, p2: number): number => {
-            const timesPartnered = partnerships.get(p1)?.get(p2) ?? 0;
-            const timesOpposed = oppositions.get(p1)?.get(p2) ?? 0;
-            return timesPartnered * 2 + timesOpposed; // Partnership weighs more than opposition
+        // Modify the scoring function to prioritize unmatched players
+        const getPartnershipScore = (p1: number, p2: number, p3: number, p4: number): number => {
+            const baseScore = (
+                (partnerships.get(p1)?.get(p2) ?? 0) * 2 +
+                (partnerships.get(p3)?.get(p4) ?? 0) * 2 +
+                (oppositions.get(p1)?.get(p3) ?? 0) +
+                (oppositions.get(p1)?.get(p4) ?? 0) +
+                (oppositions.get(p2)?.get(p3) ?? 0) +
+                (oppositions.get(p2)?.get(p4) ?? 0)
+            );
+
+            // Apply priority scoring - lower score means higher priority
+            const priorityBonus = 
+                (priorityPlayerIds.has(p1) ? -10 : 0) +
+                (priorityPlayerIds.has(p2) ? -10 : 0) +
+                (priorityPlayerIds.has(p3) ? -10 : 0) +
+                (priorityPlayerIds.has(p4) ? -10 : 0);
+
+            return baseScore + priorityBonus;
         };
 
-        // Available players for this round
-        const availablePlayers = new Set(tournament.players.map((p: any) => p.id));
-        const playerMap = new Map(tournament.players.map((p: any) => [p.id, p]));
-
         while (availablePlayers.size >= 4) {
-            // Find the best foursome (two pairs) with minimal previous interaction
             let bestFoursome: number[][] | null = null;
             let bestScore = Infinity;
 
             const players = Array.from(availablePlayers);
             
-            // Try all possible combinations of four players
+            // Try all possible combinations, but prioritize including unmatched players
             for (let i = 0; i < players.length - 3; i++) {
                 for (let j = i + 1; j < players.length - 2; j++) {
                     for (let k = j + 1; k < players.length - 1; k++) {
@@ -288,15 +282,9 @@ export class MatchService {
                                 [[p1, p4], [p2, p3]]
                             ];
 
-                            combinations.forEach((teams: any) => {
+                            combinations.forEach(teams => {
                                 const [[t1p1, t1p2], [t2p1, t2p2]] = teams;
-                                const score = 
-                                    getPartnershipScore(t1p1, t1p2) +
-                                    getPartnershipScore(t2p1, t2p2) +
-                                    getPartnershipScore(t1p1, t2p1) +
-                                    getPartnershipScore(t1p1, t2p2) +
-                                    getPartnershipScore(t1p2, t2p1) +
-                                    getPartnershipScore(t1p2, t2p2);
+                                const score = getPartnershipScore(t1p1, t1p2, t2p1, t2p2);
 
                                 if (score < bestScore) {
                                     bestScore = score;
@@ -537,10 +525,68 @@ export class MatchService {
                     tournament_id: match.tournament_id,
                     matches_played: 1
                 };
-
-                console.log(leaderboardEntry, "MMM");
                 await this.leaderboardRepository.save(leaderboardEntry, tx);
             }
         }
+    }
+
+    public getUnmatchedPlayersWithTx = async (tournamentId: number, roundNumber: number, tx?: Prisma.TransactionClient): Promise<Player[]> => {
+        const tournament = await this.tournamentRepository.findById(tournamentId, tx);
+        if (!tournament) {
+            throw new ResponseError(404, `Tournament with ID ${tournamentId} not found`);
+        }
+
+        // Get all players in tournament
+        const allPlayers = new Set(tournament.players.map((p: any) => p.id));
+        
+        // Get matches for this specific round
+        const roundMatches: any = await this.matchRepository.findByTournamentIdAndRound(tournamentId, roundNumber, tx);
+        const playedPlayerIds = new Set<number>();
+        
+        // Collect all players who played in this round
+        for (const match of roundMatches) {
+            for (const score of match.match_scores) {
+                const playerTeams = score.team.player_teams;
+                playerTeams.forEach((pt: any) => playedPlayerIds.add(pt.player_id));
+            }
+        }
+        
+        // Find players who haven't played
+        const unmatchedPlayerIds = Array.from(allPlayers).filter((id: any) => !playedPlayerIds.has(id));
+        
+        // Get full player details for unmatched players
+        const unmatchedPlayers = tournament.players.filter((player: any) => unmatchedPlayerIds.includes(player.id));
+        
+        return unmatchedPlayers;
+    }
+    // Get unmatched players for a specific round
+    public getUnmatchedPlayers = async (tournamentId: number, roundNumber: number): Promise<Player[]> => {
+        const tournament = await this.tournamentRepository.findById(tournamentId);
+        if (!tournament) {
+            throw new ResponseError(404, `Tournament with ID ${tournamentId} not found`);
+        }
+
+        // Get all players in tournament
+        const allPlayers = new Set(tournament.players.map((p: any) => p.id));
+        
+        // Get matches for this specific round
+        const roundMatches: any = await this.matchRepository.findByTournamentIdAndRound(tournamentId, roundNumber);
+        const playedPlayerIds = new Set<number>();
+        
+        // Collect all players who played in this round
+        for (const match of roundMatches) {
+            for (const score of match.match_scores) {
+                const playerTeams = score.team.player_teams;
+                playerTeams.forEach((pt: any) => playedPlayerIds.add(pt.player_id));
+            }
+        }
+        
+        // Find players who haven't played
+        const unmatchedPlayerIds = Array.from(allPlayers).filter((id: any) => !playedPlayerIds.has(id));
+        
+        // Get full player details for unmatched players
+        const unmatchedPlayers = tournament.players.filter((player: any) => unmatchedPlayerIds.includes(player.id));
+        
+        return unmatchedPlayers;
     }
 } 

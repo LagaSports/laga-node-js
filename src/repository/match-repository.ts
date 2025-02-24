@@ -194,4 +194,24 @@ export class MatchRepository {
             }
         });
     }
+
+    findByTournamentIdAndRound = async (tournamentId: number, roundNumber: number, tx?: Prisma.TransactionClient): Promise<Match[]> => {
+        return await (tx ?? this.prismaClient).match.findMany({
+            where: {
+                tournament_id: tournamentId,
+                round_number: roundNumber
+            },
+            include: {
+                match_scores: {
+                    include: {
+                        team: {
+                            include: {
+                                player_teams: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 } 
