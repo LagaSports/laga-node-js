@@ -1,4 +1,4 @@
-import { PrismaClient, Tournament, Prisma } from "@prisma/client";
+import { PrismaClient, Tournament, Prisma, TournamentAddress } from "@prisma/client";
 import { CreateTournamentDTO } from "../dto/internal/CreateTournamentDTO.js";
 import { RecentTournamentDTO } from "../dto/internal/TournamentDTO.js";
 
@@ -100,10 +100,13 @@ export class TournamentRepository {
                         phone_number: true
                     }
                 },
-                padel_court: {
+                tournament_address: {
                     select: {
                         id: true,
-                        court_name: true,
+                        name: true,
+                        google_maps_link: true,
+                        description: true,
+                        google_place_id: true,
                     }
                 }
             }
@@ -126,6 +129,12 @@ export class TournamentRepository {
                     }
                 }
             }
+        });
+    }
+
+    createTournamentAddress = async (payload: any, tx?: Prisma.TransactionClient): Promise<TournamentAddress> => {
+        return await (tx ?? this.prismaClient).tournamentAddress.create({
+            data: payload,
         });
     }
 }

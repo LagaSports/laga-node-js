@@ -5,5 +5,5 @@ export type CreateTournamentDTO = {
     points_to_play: number;
     creator_id: number;
     number_of_court: number;
-    padel_court_id: number;
+    tournament_address_id: number;
 } 

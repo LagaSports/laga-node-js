@@ -135,8 +135,8 @@ export class MatchService {
                 status: MatchStatus.IN_PROGRESS,
             };
 
-            // Cycle through courts 1 to maxCourts
-            currentCourt = currentCourt % maxCourts + 1;
+            // Update court number, ensuring we use all available courts
+            currentCourt = (currentCourt % maxCourts) + 1;
 
             const createdMatch = await this.matchRepository.create(createMatchDTO, tx);
 
@@ -326,8 +326,8 @@ export class MatchService {
                 status: MatchStatus.IN_PROGRESS
             };
 
-            // Cycle through courts 1 to maxCourts
-            currentCourt = currentCourt % maxCourts + 1;
+            // Update court number, ensuring we use all available courts
+            currentCourt = (currentCourt % maxCourts) + 1;
 
             const createdMatch = await this.matchRepository.create(createMatchDTO, tx);
 

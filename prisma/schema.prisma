@@ -48,9 +48,9 @@ model Tournament {
     matches     Match[]
     leaderboards Leaderboard[]
     players     Player[]
-    padel_court PadelCourt? @relation(fields: [padel_court_id], references: [id])
-    padel_court_id    Int?
-    
+    tournament_address_id Int
+    tournament_address TournamentAddress @relation(fields: [tournament_address_id], references: [id])
+
     @@map("tournaments")
 
     @@index([name])
@@ -228,19 +228,17 @@ model Leaderboard {
     @@index([matches_draw])
 }
 
-model PadelCourt {
-    id             Int      @id @default(autoincrement())
-    province       String   @db.VarChar()
-    city           String?  @db.VarChar()
-    kecamatan      String?  @db.VarChar()
-    kelurahan      String?  @db.VarChar()
-    court_name     String   @db.VarChar()
-    number_of_court Int     
+model TournamentAddress {
+    id          Int      @id @default(autoincrement())  
+    name     String   @db.VarChar()
     google_maps_link String   @db.VarChar()
+    description     String   @db.VarChar()
+    google_place_id String   @db.VarChar()
     created_at      DateTime @default(now())
     updated_at      DateTime @updatedAt
     deleted_at      DateTime?
     tournaments Tournament[]
+    @@map("tournament_addresses")
 
-    @@map("padel_courts")
+    @@index([google_place_id])
 }

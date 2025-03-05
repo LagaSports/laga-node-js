@@ -6,7 +6,12 @@ export const createTournamentValidation: Schema = Joi.object({
     pointsToPlay: Joi.number().required(),
     creatorId: Joi.number().required(),
     numberOfCourt: Joi.number().required(),
-    padelCourtId: Joi.number().required(),
+    location: Joi.object({
+        placeId: Joi.string(),
+        name: Joi.string().required(),
+        googleMapsLink: Joi.string().required(),
+        description: Joi.string().required(),
+    }).required(),
     players: Joi.array().items(Joi.object({
         name: Joi.string().required(),
     })).required().min(4)

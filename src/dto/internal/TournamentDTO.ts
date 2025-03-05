@@ -1,5 +1,4 @@
 import { MatchDTO } from "./MatchDTO.js";
-import { PadelCourtDTO } from "./PadelCourtDTO.js";
 import { PlayerDTO } from "./PlayerDTO.js";
 
 export type TournamentDTO = {
@@ -7,12 +6,16 @@ export type TournamentDTO = {
     name: string;
     creatorId: number;
     players: PlayerDTO[];
-    location: string;
     pointsToPlay: number;
     type: string;
     numberOfCourt: number;
     matches: MatchDTO[];
-    padelCourt: PadelCourtDTO | null;
+    location: {
+        name: string;
+        googleMapsLink: string;
+        description: string;
+        googlePlaceId: string;
+    } | null;
 }
 
 export type LeaderboardDTO = {

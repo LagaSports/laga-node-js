@@ -1,4 +1,4 @@
-import { Match, PrismaClient, Tournament } from "@prisma/client";
+import { Match, PrismaClient, Tournament, TournamentAddress } from "@prisma/client";
 import { CreateTournamentRequestDTO } from "../dto/api/CreateTournamentRequest.js";
 import { GetTournamentByCreatorRequestDTO } from "../dto/api/GetTournamentByCreatorRequestDTO.js";
 import { CreateTournamentDTO } from "../dto/internal/CreateTournamentDTO.js";
@@ -11,7 +11,6 @@ import { createTournamentValidation, getTournamentsByCreatorIdValidation } from 
 import { validate } from "../validation/validation.js";
 import { MatchService } from "./match-service.js";
 import { PlayerService } from "./player-service.js";
-import { PadelCourtRepository } from "../repository/padel-court-repository.js";
 
 export class TournamentService {
     constructor(
@@ -20,27 +19,27 @@ export class TournamentService {
         private readonly playerService: PlayerService,
         private readonly matchService: MatchService,
         private readonly prismaClient: PrismaClient,
-        private readonly padelCourtRepository: PadelCourtRepository
     ) {}
 
     public create = async (payload: CreateTournamentRequestDTO): Promise<TournamentDTO> => {
         try {
             validate(createTournamentValidation, payload);
 
-            const padelCourt = await this.padelCourtRepository.findById(Number(payload.padelCourtId));
-
-            if (!padelCourt) {
-                throw new ResponseError(404, "Padel court not found");
-            }
-
             return await this.prismaClient.$transaction(async (tx) => {
+                const tournamentAddressPayload: any = {
+                    name: payload.location.name,
+                    google_maps_link: payload.location.googleMapsLink,
+                    description: payload.location.description,
+                    google_place_id: payload.location.placeId,
+                };
+                const tournamentAddress = await this.tournamentRepository.createTournamentAddress(tournamentAddressPayload, tx);
                 const tournamentData: CreateTournamentDTO = {
                     name: payload.name,
                     type: payload.type,
                     points_to_play: Number(payload.pointsToPlay),
                     creator_id: payload.creatorId,
                     number_of_court: Number(payload.numberOfCourt),
-                    padel_court_id: Number(payload.padelCourtId),
+                    tournament_address_id: tournamentAddress.id,
                 };
 
                 const createdTournament = await this.tournamentRepository.create(tournamentData, tx);
@@ -121,7 +120,6 @@ export class TournamentService {
             id: tournament.id,
             name: tournament.name,
             creatorId: tournament.creator_id,
-            location: tournament.location ?? '',
             pointsToPlay: tournament.points_to_play,
             type: tournament.type,
             numberOfCourt: tournament.number_of_court,
@@ -138,9 +136,11 @@ export class TournamentService {
                 email: player.email,
                 phoneNumber: player.phone_number,
             })) ?? [],
-            padelCourt: tournament.padel_court ? {
-                id: tournament.padel_court.id,
-                name: tournament.padel_court.court_name,
+            location: tournament.tournament_address ? {
+                name: tournament.tournament_address.name,
+                googleMapsLink: tournament.tournament_address.google_maps_link,
+                description: tournament.tournament_address.description,
+                googlePlaceId: tournament.tournament_address.google_place_id,
             } : null,
         };
     }
